@@ -1,5 +1,3 @@
-navbar.style.display = "none";
-
 /* LOGIN */
 function login() {
   const emailVal = email.value;
