@@ -1,0 +1,8 @@
+{
+  "name": "Smart Attendance",
+  "short_name": "Attendance",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#3f51b5",
+  "background_color": "#ffffff"
+}
