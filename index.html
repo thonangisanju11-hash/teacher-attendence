@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Attendance System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3f51b5">
+
+  <!-- Icons & Libraries -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav id="navbar">
+  <div class="logo">Attendance</div>
+  <span class="material-icons menu" onclick="toggleMenu()">menu</span>
+
+  <div class="nav-links" id="navLinks">
+    <button onclick="showPage('attendance')">Attendance</button>
+    <button onclick="showPage('members')">Members</button>
+    <button onclick="showPage('history')">History</button>
+    <button onclick="showPage('charts')">Charts</button>
+    <button onclick="showPage('dashboard')">Dashboard</button>
+    <button onclick="toggleTheme()">🌙</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div id="login" class="login-wrapper">
+  <div class="login-card">
+    <h2>Login</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="loginError"></p>
+  </div>
+</div>
+
+<!-- ATTENDANCE -->
+<div id="attendance" class="page">
+  <h2>QR Attendance</h2>
+  <div id="qrAdmin"></div>
+  <button onclick="generateQR()">Generate QR (Admin)</button>
+
+  <h3>Scan QR (Student)</h3>
+  <div id="scanner"></div>
+</div>
+
+<!-- MEMBERS -->
+<div id="members" class="page">
+  <h2>Add Student (Admin)</h2>
+  <input id="studentEmail" placeholder="Student Email">
+  <button onclick="addStudent()">Add</button>
+</div>
+
+<!-- HISTORY -->
+<div id="history" class="page">
+  <h2>Attendance History</h2>
+  <div id="historyData"></div>
+</div>
+
+<!-- CHARTS -->
+<div id="charts" class="page">
+  <h2>Attendance Charts</h2>
+  <canvas id="attendanceChart"></canvas>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page">
+  <h2>Admin Dashboard</h2>
+  <div class="card">Total Students: <span id="totalStudents">0</span></div>
+  <div class="card">Today Attendance: <span id="todayPercent">0</span>%</div>
+</div>
+
+<script src="firebase.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
