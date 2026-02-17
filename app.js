@@ -6,14 +6,37 @@ const navbar = document.getElementById("navbar");
 const loginPage = document.getElementById("loginPage");
 const loginError = document.getElementById("error");
 const navLinks = document.getElementById("navLinks");
-
 const ADMIN_EMAIL = "admin@attendance.com";
 let scanner = null;
 
 /*************************
  * PAGE CONTROL
  *************************/
-navbar.style.display = "none";
+const video = document.getElementById("video");
+
+Promise.all([
+  faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
+  faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
+  faceapi.nets.faceRecognitionNet.loadFromUri("/models")
+]);
+
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => video.srcObject = stream);
+
+async function verifyFace() {
+  const detection = await faceapi
+    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+    .withFaceLandmarks()
+    .withFaceDescriptor();
+
+  if (!detection) {
+    faceStatus.innerText = "Face not detected";
+    return;
+  }
+
+  faceStatus.innerText = "Face verified ✔";
+}
+
 
 function showPage(id) {
   pages.forEach(p => p.style.display = "none");
