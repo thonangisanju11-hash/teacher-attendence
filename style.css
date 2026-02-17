@@ -60,3 +60,27 @@ nav {
   .nav-links { display: none; flex-direction: column; }
   .nav-links.show { display: flex; }
 }
+.card, .page {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+button {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
