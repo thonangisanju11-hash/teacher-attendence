@@ -203,3 +203,18 @@ function loadChart(present, absent) {
 function today() {
   return new Date().toISOString().split("T")[0];
 }
+
+
+function loadDashboard() {
+  const date = today();
+
+  db.collection("users").get().then(snap => {
+    totalStudents.innerText = snap.size;
+  });
+
+  db.collection("attendance").doc(date).get().then(doc => {
+    if (doc.exists) {
+      presentToday.innerText = Object.keys(doc.data()).length;
+    }
+  });
+}
