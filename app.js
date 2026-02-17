@@ -1,76 +1,141 @@
-/* LOGIN */
-function login() {
-  const emailVal = email.value;
-  const passwordVal = password.value;
-  const roleVal = role.value;
+/*************************
+ * GLOBAL ELEMENTS
+ *************************/
+const pages = document.querySelectorAll(".page");
+const navbar = document.getElementById("navbar");
+const loginPage = document.getElementById("loginPage");
+const loginError = document.getElementById("error");
+const navLinks = document.getElementById("navLinks");
 
-  auth.signInWithEmailAndPassword(emailVal, passwordVal)
-    .then(res => {
-      navbar.style.display = "flex";
-      loginPage.style.display = "none";
-      showPage("dashboard");
+const ADMIN_EMAIL = "admin@attendance.com";
+let scanner = null;
 
-      // save role
-      db.collection("users").doc(res.user.uid).set({
-        email: emailVal,
-        role: roleVal
-      }, { merge: true });
+/*************************
+ * PAGE CONTROL
+ *************************/
+navbar.style.display = "none";
 
-      // role based access
-      if (roleVal !== "admin") {
-        dashboard.style.display = "none";
-        members.style.display = "none";
-        showPage("attendance");
-        startScanner();
-      }
-    })
-    .catch(err => {
-      loginError.innerText = err.message;
-    });
-}
-
-/* LOGOUT */
-function logout(){
-  auth.signOut().then(() => location.reload());
-}
-
-/* PAGE CONTROL */
-function showPage(id){
+function showPage(id) {
   pages.forEach(p => p.style.display = "none");
   document.getElementById(id).style.display = "block";
 }
 
-function toggleMenu(){
+function toggleMenu() {
   navLinks.classList.toggle("show");
 }
 
-function toggleTheme(){
+function toggleTheme() {
   document.body.classList.toggle("dark");
 }
 
-/* ROLE CHECK (extra safety) */
-function checkRole(uid){
-  db.collection("users").doc(uid).get().then(doc=>{
-    if(doc.exists && doc.data().role !== "admin"){
-      members.style.display = "none";
-      dashboard.style.display = "none";
+/*************************
+ * LOGIN
+ *************************/
+function login() {
+  const emailVal = email.value.trim();
+  const passwordVal = password.value.trim();
+  const roleVal = role ? role.value : "student";
+  const remember = rememberMe ? rememberMe.checked : false;
+
+  loginError.innerText = "";
+
+  auth.setPersistence(
+    remember
+      ? firebase.auth.Auth.Persistence.LOCAL
+      : firebase.auth.Auth.Persistence.SESSION
+  )
+  .then(() => auth.signInWithEmailAndPassword(emailVal, passwordVal))
+  .then(res => {
+    navbar.style.display = "flex";
+    loginPage.style.display = "none";
+
+    // Save role
+    db.collection("users").doc(res.user.uid).set({
+      email: emailVal,
+      role: emailVal === ADMIN_EMAIL ? "admin" : roleVal
+    }, { merge: true });
+
+    if (emailVal === ADMIN_EMAIL) {
+      showPage("dashboard");   // ADMIN
+      return;
     }
-  });
+
+    // STUDENT
+    hideAdminUI();
+    showPage("attendance");
+    startScanner();
+  })
+  .catch(err => showError(err.code));
 }
 
-/* QR GENERATE (ADMIN) */
-function generateQR(){
+/*************************
+ * AUTO LOGIN ON REFRESH
+ *************************/
+auth.onAuthStateChanged(user => {
+  if (!user) return;
+
+  navbar.style.display = "flex";
+  loginPage.style.display = "none";
+
+  if (user.email === ADMIN_EMAIL) {
+    showPage("dashboard");
+  } else {
+    hideAdminUI();
+    showPage("attendance");
+    startScanner();
+  }
+});
+
+/*************************
+ * LOGOUT
+ *************************/
+function logout() {
+  auth.signOut().then(() => location.reload());
+}
+
+/*************************
+ * ROLE / UI CONTROL
+ *************************/
+function hideAdminUI() {
+  const dashboard = document.getElementById("dashboard");
+  const members = document.getElementById("members");
+  if (dashboard) dashboard.style.display = "none";
+  if (members) members.style.display = "none";
+}
+
+/*************************
+ * ERROR HANDLING
+ *************************/
+function showError(code) {
+  const errors = {
+    "auth/user-not-found": "User not found",
+    "auth/wrong-password": "Wrong password",
+    "auth/invalid-email": "Invalid email address",
+    "auth/network-request-failed": "Network error"
+  };
+  loginError.innerText = errors[code] || "Login failed";
+}
+
+/*************************
+ * QR GENERATE (ADMIN)
+ *************************/
+function generateQR() {
+  const qrAdmin = document.getElementById("qrcode");
   qrAdmin.innerHTML = "";
-  new QRCode(qrAdmin,{
-    text: "ATTEND_" + new Date().toISOString().split("T")[0],
+
+  new QRCode(qrAdmin, {
+    text: "ATTEND_" + today(),
     width: 200,
     height: 200
   });
 }
 
-/* QR SCANNER (STUDENT) */
-let scanner;
-function startScanner(){
+/*************************
+ * QR SCANNER (STUDENT)
+ *************************/
+function startScanner() {
+  if (scanner) return;
+
   scanner = new Html5Qrcode("scanner");
   scanner.start(
     { facingMode: "environment" },
@@ -79,23 +144,39 @@ function startScanner(){
   );
 }
 
-/* ATTENDANCE */
-function markAttendance(code){
-  const date = new Date().toISOString().split("T")[0];
-  db.collection("attendance").doc(date)
-    .set({ [auth.currentUser.uid]: "Present" }, { merge: true });
+/*************************
+ * ATTENDANCE
+ *************************/
+function markAttendance(code) {
+  const date = today();
+
+  db.collection("attendance").doc(date).set({
+    [auth.currentUser.uid]: "Present"
+  }, { merge: true });
+
+  alert("Attendance Marked");
+  if (scanner) scanner.stop();
 }
 
-/* CHART */
-function loadChart(present, absent){
-  new Chart(attendanceChart,{
+/*************************
+ * CHART
+ *************************/
+function loadChart(present, absent) {
+  new Chart(attendanceChart, {
     type: "doughnut",
-    data:{
+    data: {
       labels: ["Present", "Absent"],
-      datasets:[{
-        data:[present, absent],
-        backgroundColor:["green","red"]
+      datasets: [{
+        data: [present, absent],
+        backgroundColor: ["green", "red"]
       }]
     }
   });
+}
+
+/*************************
+ * UTILS
+ *************************/
+function today() {
+  return new Date().toISOString().split("T")[0];
 }
